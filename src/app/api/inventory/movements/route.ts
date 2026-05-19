@@ -1,13 +1,20 @@
 import { Prisma } from "@prisma/client";
 import { getSessionUser } from "@/lib/auth";
 import { jsonError, jsonOk, jsonUnauthorized } from "@/lib/api-response";
+import { corsOptionsResponse } from "@/lib/cors";
 import { prisma } from "@/lib/prisma";
 import { movementQuerySchema } from "@/lib/validations/stock";
 import { NextRequest } from "next/server";
 
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  return corsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get("origin");
   const user = await getSessionUser(request);
-  if (!user) return jsonUnauthorized();
+  if (!user) return jsonUnauthorized(origin);
 
   const { searchParams } = new URL(request.url);
   const parsed = movementQuerySchema.safeParse({
@@ -19,7 +26,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!parsed.success) {
-    return jsonError(parsed.error.issues[0]?.message ?? "Invalid query", 400);
+    return jsonError(parsed.error.issues[0]?.message ?? "Invalid query", 400, origin);
   }
 
   const { productId, from, to, page, limit } = parsed.data;
@@ -55,5 +62,5 @@ export async function GET(request: NextRequest) {
       total,
       totalPages: Math.ceil(total / limit),
     },
-  });
+  }, 200, origin);
 }

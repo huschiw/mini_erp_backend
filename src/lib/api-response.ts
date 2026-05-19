@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { corsHeaders } from "./cors";
 
-export function jsonOk<T>(data: T, status = 200, origin?: string | null | undefined) {
+export function jsonOk<T>(data: T, status = 200, origin: string | null = null) {
   const response = NextResponse.json(data, { status });
   const headers = corsHeaders(origin);
   Object.entries(headers).forEach(([key, value]) => {
@@ -10,7 +10,7 @@ export function jsonOk<T>(data: T, status = 200, origin?: string | null | undefi
   return response;
 }
 
-export function jsonError(message: string, status = 400, origin?: string | null | undefined) {
+export function jsonError(message: string, status = 400, origin: string | null = null) {
   const response = NextResponse.json({ error: message }, { status });
   const headers = corsHeaders(origin);
   Object.entries(headers).forEach(([key, value]) => {
@@ -19,11 +19,11 @@ export function jsonError(message: string, status = 400, origin?: string | null 
   return response;
 }
 
-export function jsonUnauthorized(message = "Unauthorized", origin?: string | null | undefined) {
+export function jsonUnauthorized(message = "Unauthorized", origin: string | null = null) {
   return jsonError(message, 401, origin);
 }
 
-export function jsonForbidden(message = "Forbidden", origin?: string | null | undefined) {
+export function jsonForbidden(message = "Forbidden", origin: string | null = null) {
   return jsonError(message, 403, origin);
 }
 

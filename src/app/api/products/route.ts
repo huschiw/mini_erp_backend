@@ -6,14 +6,21 @@ import {
   jsonOk,
   jsonUnauthorized,
 } from "@/lib/api-response";
+import { corsOptionsResponse } from "@/lib/cors";
 import { prisma } from "@/lib/prisma";
 import { productQuerySchema, productSchema } from "@/lib/validations/product";
 import { logCreate } from "@/lib/activity-log";
 import { NextRequest } from "next/server";
 
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  return corsOptionsResponse(origin);
+}
+
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get("origin");
   const user = await getSessionUser(request);
-  if (!user) return jsonUnauthorized();
+  if (!user) return jsonUnauthorized(origin);
 
   const { searchParams } = new URL(request.url);
   const parsed = productQuerySchema.safeParse({
@@ -24,7 +31,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!parsed.success) {
-    return jsonError(parsed.error.issues[0]?.message ?? "Invalid query", 400);
+    return jsonError(parsed.error.issues[0]?.message ?? "Invalid query", 400, origin);
   }
 
   const { search, categoryId, page, limit } = parsed.data;
@@ -59,19 +66,20 @@ export async function GET(request: NextRequest) {
       total,
       totalPages: Math.ceil(total / limit),
     },
-  });
+  }, 200, origin);
 }
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get("origin");
   const user = await getSessionUser(request);
-  if (!user) return jsonUnauthorized();
-  if (!requireRole(user, [Role.ADMIN])) return jsonForbidden();
+  if (!user) return jsonUnauthorized(origin);
+  if (!requireRole(user, [Role.ADMIN])) return jsonForbidden(origin);
 
   try {
     const body = await request.json();
     const parsed = productSchema.safeParse(body);
     if (!parsed.success) {
-      return jsonError(parsed.error.issues[0]?.message ?? "Invalid input", 400);
+      return jsonError(parsed.error.issues[0]?.message ?? "Invalid input", 400, origin);
     }
 
     const { imageUrl, barcode, ...rest } = parsed.data;
@@ -91,14 +99,14 @@ export async function POST(request: NextRequest) {
     const ipAddress = request.headers.get("x-forwarded-for") ?? undefined;
     await logCreate(user.id, user.name, "Product", product.id, product.name, ipAddress);
 
-    return jsonOk(product, 201);
+    return jsonOk(product, 201, origin);
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      return jsonError("SKU or barcode already exists", 409);
+      return jsonError("SKU or barcode already exists", 409, origin);
     }
-    return jsonError("Failed to create product", 500);
+    return jsonError("Failed to create product", 500, origin);
   }
 }

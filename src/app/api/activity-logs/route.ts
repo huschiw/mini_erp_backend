@@ -1,9 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { getSessionUser } from "@/lib/auth";
 import { jsonError, jsonOk, jsonUnauthorized } from "@/lib/api-response";
+import { corsOptionsResponse } from "@/lib/cors";
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 import { z } from "zod";
+
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  return corsOptionsResponse(origin);
+}
 
 const querySchema = z.object({
   userId: z.string().uuid().optional(),
@@ -14,8 +20,9 @@ const querySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get("origin");
   const user = await getSessionUser(request);
-  if (!user) return jsonUnauthorized();
+  if (!user) return jsonUnauthorized(origin);
 
   const { searchParams } = new URL(request.url);
   const parsed = querySchema.safeParse({
@@ -27,7 +34,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!parsed.success) {
-    return jsonError(parsed.error.issues[0]?.message ?? "Invalid query", 400);
+    return jsonError(parsed.error.issues[0]?.message ?? "Invalid query", 400, origin);
   }
 
   const { userId, type, entityType, page, limit } = parsed.data;
@@ -59,5 +66,5 @@ export async function GET(request: NextRequest) {
       total,
       totalPages: Math.ceil(total / limit),
     },
-  });
+  }, 200, origin);
 }
