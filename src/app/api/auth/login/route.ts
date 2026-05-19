@@ -3,14 +3,29 @@ import { jsonError, jsonOk } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations/auth";
 import { logLogin } from "@/lib/activity-log";
-import { NextRequest } from "next/server";
+import { corsHeaders } from "@/lib/cors";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(origin),
+  });
+}
 
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get("origin");
   try {
     const body = await request.json();
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {
-      return jsonError(parsed.error.issues[0]?.message ?? "Invalid input", 400);
+      const response = jsonError(parsed.error.issues[0]?.message ?? "Invalid input", 400);
+      const headers = corsHeaders(origin);
+      Object.entries(headers).forEach(([key, value]) => {
+        response.headers.set(key, value);
+      });
+      return response;
     }
 
     const user = await prisma.user.findUnique({
@@ -18,7 +33,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user || !(await verifyPassword(parsed.data.password, user.password))) {
-      return jsonError("Invalid email or password", 401);
+      const response = jsonError("Invalid email or password", 401);
+      const headers = corsHeaders(origin);
+      Object.entries(headers).forEach(([key, value]) => {
+        response.headers.set(key, value);
+      });
+      return response;
     }
 
     const sessionUser = {
@@ -35,12 +55,22 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get("user-agent") ?? undefined;
     await logLogin(user.id, user.name, ipAddress, userAgent);
 
-    return jsonOk({
+    const response = jsonOk({
       user: sessionUser,
       token,
     });
+    const headers = corsHeaders(origin);
+    Object.entries(headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   } catch (error) {
     console.error("Login failed:", error);
-    return jsonError("Login failed", 500);
+    const response = jsonError("Login failed", 500);
+    const headers = corsHeaders(origin);
+    Object.entries(headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 }
