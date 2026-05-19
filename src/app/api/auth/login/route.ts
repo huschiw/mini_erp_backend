@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
       user: sessionUser,
       token,
     });
-  } catch {
+  } catch (error) {
+    console.error("Login failed:", error);
     return jsonError("Login failed", 500);
   }
 }
