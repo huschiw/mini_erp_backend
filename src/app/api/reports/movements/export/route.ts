@@ -1,5 +1,6 @@
 import { getSessionUser } from "@/lib/auth";
 import { jsonError, jsonUnauthorized } from "@/lib/api-response";
+import { corsHeaders } from "@/lib/cors";
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 
@@ -13,8 +14,16 @@ function escapeCSV(value: unknown): string {
 }
 
 export async function GET(request: NextRequest) {
+  const origin = request.headers.get("origin") ?? undefined;
   const user = await getSessionUser(request);
-  if (!user) return jsonUnauthorized();
+  if (!user) {
+    const response = jsonUnauthorized(origin);
+    const headers = corsHeaders(origin);
+    Object.entries(headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
+  }
 
   try {
     const { searchParams } = new URL(request.url);
@@ -68,9 +77,15 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type": "text/csv",
         "Content-Disposition": 'attachment; filename="inventory-movements.csv"',
+        ...corsHeaders(origin),
       },
     });
   } catch {
-    return jsonError("Failed to export movements", 500);
+    const response = jsonError("Failed to export movements", 500);
+    const headers = corsHeaders(origin);
+    Object.entries(headers).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 }
