@@ -1,0 +1,21 @@
+import { NextResponse } from "next/server";
+
+const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:3000";
+
+export function corsHeaders(origin?: string | null) {
+  const allowed = origin === FRONTEND_URL ? origin : FRONTEND_URL;
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Credentials": "true",
+  };
+}
+
+export function withCors(response: NextResponse, origin?: string | null) {
+  const headers = corsHeaders(origin);
+  Object.entries(headers).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
