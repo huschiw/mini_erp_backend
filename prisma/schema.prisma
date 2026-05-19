@@ -23,6 +23,15 @@ enum InventoryMovementType {
   ADJUSTMENT
 }
 
+enum ActivityType {
+  LOGIN
+  CREATE
+  UPDATE
+  DELETE
+  STOCK_IN
+  STOCK_OUT
+}
+
 model User {
   id                 String              @id @default(uuid())
   name               String
@@ -32,6 +41,7 @@ model User {
   stockIns           StockIn[]
   stockOuts          StockOut[]
   inventoryMovements InventoryMovement[]
+  activityLogs       ActivityLog[]
   createdAt          DateTime            @default(now())
 }
 
@@ -100,4 +110,21 @@ model InventoryMovement {
   createdBy   String
   creator     User                  @relation(fields: [createdBy], references: [id], onDelete: Restrict)
   createdAt   DateTime              @default(now())
+}
+
+model ActivityLog {
+  id          String       @id @default(uuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        ActivityType
+  entityType  String?      // e.g., "Product", "Category", "StockIn"
+  entityId    String?      // ID of the affected entity
+  description String       // Human-readable description
+  metadata    String?      // JSON string for additional data
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime     @default(now())
+
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
 }

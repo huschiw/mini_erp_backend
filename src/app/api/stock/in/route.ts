@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { jsonError, jsonOk, jsonUnauthorized } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 import { stockInSchema } from "@/lib/validations/stock";
+import { logStockIn } from "@/lib/activity-log";
 import { NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -59,6 +60,17 @@ export async function POST(request: NextRequest) {
 
       return { stockIn, movement };
     });
+
+    // Log activity
+    const ipAddress = request.headers.get("x-forwarded-for") ?? undefined;
+    await logStockIn(
+      user.id,
+      user.name,
+      result.stockIn.product.name,
+      result.stockIn.quantity,
+      result.stockIn.id,
+      ipAddress
+    );
 
     return jsonOk(result, 201);
   } catch (error) {

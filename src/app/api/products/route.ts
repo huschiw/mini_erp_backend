@@ -8,6 +8,7 @@ import {
 } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 import { productQuerySchema, productSchema } from "@/lib/validations/product";
+import { logCreate } from "@/lib/activity-log";
 import { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -85,6 +86,10 @@ export async function POST(request: NextRequest) {
       },
       include: { category: { select: { id: true, name: true } } },
     });
+
+    // Log activity
+    const ipAddress = request.headers.get("x-forwarded-for") ?? undefined;
+    await logCreate(user.id, user.name, "Product", product.id, product.name, ipAddress);
 
     return jsonOk(product, 201);
   } catch (error) {

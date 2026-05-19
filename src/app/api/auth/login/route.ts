@@ -2,6 +2,7 @@ import { createToken, verifyPassword } from "@/lib/auth";
 import { jsonError, jsonOk } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations/auth";
+import { logLogin } from "@/lib/activity-log";
 import { NextRequest } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -28,6 +29,11 @@ export async function POST(request: NextRequest) {
     };
 
     const token = await createToken(sessionUser);
+
+    // Log the login activity
+    const ipAddress = request.headers.get("x-forwarded-for") ?? undefined;
+    const userAgent = request.headers.get("user-agent") ?? undefined;
+    await logLogin(user.id, user.name, ipAddress, userAgent);
 
     return jsonOk({
       user: sessionUser,
