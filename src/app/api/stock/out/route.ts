@@ -13,7 +13,7 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get("origin");
+  const origin = request.headers.get("origin") ?? undefined;
   const user = await getSessionUser(request);
   if (!user) return jsonUnauthorized(origin);
 

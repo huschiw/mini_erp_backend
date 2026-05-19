@@ -17,7 +17,7 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const origin = request.headers.get("origin");
+  const origin = request.headers.get("origin") ?? undefined;
   const user = await getSessionUser(request);
   if (!user) return jsonUnauthorized(origin);
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get("origin");
+  const origin = request.headers.get("origin") ?? undefined;
   const user = await getSessionUser(request);
   if (!user) return jsonUnauthorized(origin);
   if (!requireRole(user, [Role.ADMIN])) return jsonForbidden(origin);

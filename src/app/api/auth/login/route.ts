@@ -15,7 +15,7 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const origin = request.headers.get("origin");
+  const origin = request.headers.get("origin") ?? undefined;
   try {
     const body = await request.json();
     const parsed = loginSchema.safeParse(body);

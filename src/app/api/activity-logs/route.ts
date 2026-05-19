@@ -20,7 +20,7 @@ const querySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
-  const origin = request.headers.get("origin");
+  const origin = request.headers.get("origin") ?? undefined;
   const user = await getSessionUser(request);
   if (!user) return jsonUnauthorized(origin);
 
