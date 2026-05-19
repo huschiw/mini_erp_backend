@@ -5,7 +5,7 @@ const allowedOrigins = FRONTEND_URL.split(",")
   .map((url) => url.trim())
   .filter(Boolean);
 
-function isAllowedOrigin(origin?: string | null) {
+function isAllowedOrigin(origin?: string | null | undefined) {
   if (!origin) return false;
   if (allowedOrigins.includes(origin)) return true;
 
@@ -21,7 +21,7 @@ function isAllowedOrigin(origin?: string | null) {
   }
 }
 
-export function corsHeaders(origin?: string | null) {
+export function corsHeaders(origin?: string | null | undefined) {
   const allowed =
     isAllowedOrigin(origin) && origin
       ? origin
@@ -42,4 +42,11 @@ export function withCors(response: NextResponse, origin?: string | null) {
     response.headers.set(key, value);
   });
   return response;
+}
+
+export function corsOptionsResponse(origin?: string | null) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(origin),
+  });
 }
