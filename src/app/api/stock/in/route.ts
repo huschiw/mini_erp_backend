@@ -1,20 +1,27 @@
 import { InventoryMovementType } from "@prisma/client";
 import { getSessionUser } from "@/lib/auth";
 import { jsonError, jsonOk, jsonUnauthorized } from "@/lib/api-response";
+import { corsOptionsResponse } from "@/lib/cors";
 import { prisma } from "@/lib/prisma";
 import { stockInSchema } from "@/lib/validations/stock";
 import { logStockIn } from "@/lib/activity-log";
 import { NextRequest } from "next/server";
 
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  return corsOptionsResponse(origin);
+}
+
 export async function POST(request: NextRequest) {
+  const origin = request.headers.get("origin") ?? undefined;
   const user = await getSessionUser(request);
-  if (!user) return jsonUnauthorized();
+  if (!user) return jsonUnauthorized(origin);
 
   try {
     const body = await request.json();
     const parsed = stockInSchema.safeParse(body);
     if (!parsed.success) {
-      return jsonError(parsed.error.issues[0]?.message ?? "Invalid input", 400);
+      return jsonError(parsed.error.issues[0]?.message ?? "Invalid input", 400, origin);
     }
 
     const { productId, quantity, supplier, invoiceNumber, note } = parsed.data;
@@ -72,11 +79,11 @@ export async function POST(request: NextRequest) {
       ipAddress
     );
 
-    return jsonOk(result, 201);
+    return jsonOk(result, 201, origin);
   } catch (error) {
     if (error instanceof Error && error.message === "PRODUCT_NOT_FOUND") {
-      return jsonError("Product not found", 404);
+      return jsonError("Product not found", 404, origin);
     }
-    return jsonError("Failed to receive stock", 500);
+    return jsonError("Failed to receive stock", 500, origin);
   }
 }
