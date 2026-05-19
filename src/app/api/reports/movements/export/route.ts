@@ -76,11 +76,13 @@ export async function GET(request: NextRequest) {
     ]);
 
     const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
+    // Add UTF-8 BOM for Excel Thai character support
+    const csvWithBom = "\uFEFF" + csv;
 
-    return new Response(csv, {
+    return new Response(csvWithBom, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv",
+        "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": 'attachment; filename="inventory-movements.csv"',
         ...corsHeaders(origin),
       },
