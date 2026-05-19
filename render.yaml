@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: mini-erp-backend
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build && npm run db:push
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false

@@ -53,3 +53,29 @@ npm run dev
 | DELETE | `/api/products/:id` | ✓ | ADMIN |
 
 Send `Authorization: Bearer <token>` for protected routes.
+
+## Deploy on Render
+
+1. Push this backend repo to GitHub.
+2. Create a Postgres database on Supabase or Neon and copy its connection string.
+3. In Render, create a new Blueprint from this repo, or create a Web Service manually.
+4. Use these settings:
+
+```bash
+Build Command: npm ci && npm run build && npm run db:push
+Start Command: npm start
+```
+
+5. Set environment variables:
+
+```bash
+DATABASE_URL=postgresql://...
+JWT_SECRET=<long-random-secret>
+FRONTEND_URL=https://your-frontend.vercel.app
+```
+
+6. After the first deploy, run the seed once from Render Shell if available or locally against the production database:
+
+```bash
+npm run db:seed
+```
