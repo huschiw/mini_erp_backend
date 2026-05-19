@@ -1,8 +1,13 @@
 import { getSessionUser } from "@/lib/auth";
 import { jsonError, jsonUnauthorized } from "@/lib/api-response";
-import { corsHeaders } from "@/lib/cors";
+import { corsHeaders, corsOptionsResponse } from "@/lib/cors";
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
+
+export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  return corsOptionsResponse(origin);
+}
 
 function escapeCSV(value: unknown): string {
   if (value === null || value === undefined) return "";
