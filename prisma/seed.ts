@@ -35,20 +35,20 @@ async function main() {
   });
 
   const electronics = await prisma.category.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000001" },
+    where: { id: "0001" },
     update: {},
     create: {
-      id: "00000000-0000-0000-0000-000000000001",
+      id: "0001",
       name: "Electronics",
       description: "Electronic devices and accessories",
     },
   });
 
   const office = await prisma.category.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000002" },
+    where: { id: "0002" },
     update: {},
     create: {
-      id: "00000000-0000-0000-0000-000000000002",
+      id: "0002",
       name: "Office Supplies",
       description: "Stationery and office equipment",
     },
