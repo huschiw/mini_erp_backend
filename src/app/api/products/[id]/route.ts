@@ -68,9 +68,20 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    await prisma.product.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.inventoryMovement.deleteMany({ where: { productId: id } }),
+      prisma.stockIn.deleteMany({ where: { productId: id } }),
+      prisma.stockOut.deleteMany({ where: { productId: id } }),
+      prisma.product.delete({ where: { id } }),
+    ]);
     return jsonOk({ message: "Product deleted" }, 200, origin);
-  } catch {
-    return jsonError("Product not found", 404, origin);
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return jsonError("Product not found", 404, origin);
+    }
+    return jsonError("Delete failed", 500, origin);
   }
 }
